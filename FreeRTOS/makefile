@@ -1,5 +1,5 @@
 MODULES = modules/freertos
 BOARD ?= edu-ciaa-nxp
-MUJU ?= ~/proyectos/muju
+MUJU ?= ~/Documentos/Embebidos/Proyectos/muju
 
 include $(MUJU)/modules/base/makefile
