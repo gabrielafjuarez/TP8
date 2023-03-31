@@ -12,7 +12,7 @@
             "executable": "./build/bin/project.elf",
             "name": "Debug (OpenOCD)",
             "configFiles": [
-                "${env:HOME}/proyectos/mse/final/muju/externals/base/soc/lpc43xx/openocd/lpc4337_new.cfg"
+                "${env:HOME}/Documentos/Embebidos/Proyectos/muju/externals/base/soc/lpc43xx/openocd/lpc4337_new.cfg"
             ],
         }
     ]

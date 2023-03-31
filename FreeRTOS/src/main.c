@@ -58,7 +58,13 @@
 
 /* === Definicion y Macros ================================================= */
 
+#define COUNT_DELAY 1500000
 /* === Declaraciones de tipos de datos internos ============================ */
+
+typedef struct parametros_s {
+    digital_output_t led;
+    uint16_t periodo;
+} * parametros_t;
 
 /* === Declaraciones de funciones internas ================================= */
 
@@ -71,12 +77,55 @@ static board_t board;
 /* === Definiciones de funciones internas ================================== */
 
 void Blinking(void * parameters) {
+    parametros_t parametros = (parametros_t) parameters;
+
     while (true) {
-        DigitalOutputToggle(board->led_azul);
-        vTaskDelay(pdMS_TO_TICKS(500));
+        DigitalOutputToggle(parametros->led);
+        vTaskDelay(pdMS_TO_TICKS(parametros->periodo));
+            if (DigitalInputGetState(board->boton_cambiar)) {
+                DigitalOutputActivate(board->led_rojo);
+                } else {
+                DigitalOutputDeactivate(board->led_rojo);
+            }
     }
 }
 
+/*
+void Rojo(void * parameters) {
+    while (true) {
+        if (DigitalInputGetState(board->boton_cambiar)) {
+            DigitalOutputActivate(board->led_rojo);
+        } else {
+            DigitalOutputDeactivate(board->led_rojo);
+        }
+    }
+}
+void Verde(void * parameters) {
+    while (true) {
+        DigitalOutputToggle(board->led_verde);
+        vTaskDelay(pdMS_TO_TICKS(750));
+    }
+}
+*/
+void Amarillo(void * parameters) {
+    TickType_t ultimo_valor;
+    ultimo_valor = xTaskGetTickCount();
+
+    while (true) {
+        DigitalOutputToggle(board->led_amarillo);
+        vTaskDelayUntil(&ultimo_valor, pdMS_TO_TICKS(250));
+    }
+}
+
+void Azul(void * parameters) {
+    while (true) {
+        if (DigitalInputGetState(board->boton_prueba)) {
+            DigitalOutputActivate(board->led_azul);
+        } else {
+            DigitalOutputDeactivate(board->led_azul);
+        }
+    }
+}
 /* === Definiciones de funciones externas ================================== */
 
 /** @brief Función principal del programa
@@ -87,13 +136,30 @@ void Blinking(void * parameters) {
  **          El valor de retorno 0 es para evitar un error en el compilador.
  */
 int main(void) {
+static struct parametros_s parametros[4];
+
     /* Inicializaciones y configuraciones de dispositivos */
     board = BoardCreate();
+    //board_t board = BoardCreate();
+    parametros[0].led = board->led_rojo;
+    parametros[0].periodo = 500;
+
+    parametros[1].led = board->led_verde;
+    parametros[1].periodo = 750;
+
 
     /* Creación de las tareas */
-    xTaskCreate(Blinking, "Baliza", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(Blinking, "Rojo", configMINIMAL_STACK_SIZE, (void *)&parametros[0], tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(Blinking, "Verde", configMINIMAL_STACK_SIZE, (void *)&parametros[1], tskIDLE_PRIORITY + 1, NULL);
+    /*
+    xTaskCreate(Rojo, "Rojo", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(Verde, "Verde", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    */
+    xTaskCreate(Amarillo, "Amarillo", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(Azul, "Azul", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    
 
-    /* Arranque del sistema operativo */
+/* Arranque del sistema operativo */
     vTaskStartScheduler();
 
     /* vTaskStartScheduler solo retorna si se detiene el sistema operativo */
