@@ -82,11 +82,6 @@ void Blinking(void * parameters) {
     while (true) {
         DigitalOutputToggle(parametros->led);
         vTaskDelay(pdMS_TO_TICKS(parametros->periodo));
-            if (DigitalInputGetState(board->boton_cambiar)) {
-                DigitalOutputActivate(board->led_rojo);
-                } else {
-                DigitalOutputDeactivate(board->led_rojo);
-            }
     }
 }
 
@@ -126,6 +121,29 @@ void Azul(void * parameters) {
         }
     }
 }
+
+void Teclado(void * parameters){
+    TaskHandle_t tarea;
+
+    tarea = xTaskGetHandle("Rojo");
+
+    while (true) {
+        if (DigitalInputHasActivated(board->boton_prender)) {
+            vTaskResume(tarea);
+        } 
+        
+        if (DigitalInputHasDeactivated(board->boton_apagar)) {
+            vTaskSuspend(tarea);
+        }
+    
+        vTaskDelay(pdMS_TO_TICKS(250));
+            
+    }
+}
+
+
+
+
 /* === Definiciones de funciones externas ================================== */
 
 /** @brief Función principal del programa
@@ -136,7 +154,8 @@ void Azul(void * parameters) {
  **          El valor de retorno 0 es para evitar un error en el compilador.
  */
 int main(void) {
-static struct parametros_s parametros[4];
+    static board_t board;
+    static struct parametros_s parametros[3];
 
     /* Inicializaciones y configuraciones de dispositivos */
     board = BoardCreate();
@@ -147,14 +166,14 @@ static struct parametros_s parametros[4];
     parametros[1].led = board->led_verde;
     parametros[1].periodo = 750;
 
+    // parametros[2].led = board->led_amarillo;
+    // parametros[2].periodo = 250;
+
 
     /* Creación de las tareas */
     xTaskCreate(Blinking, "Rojo", configMINIMAL_STACK_SIZE, (void *)&parametros[0], tskIDLE_PRIORITY + 1, NULL);
     xTaskCreate(Blinking, "Verde", configMINIMAL_STACK_SIZE, (void *)&parametros[1], tskIDLE_PRIORITY + 1, NULL);
-    /*
-    xTaskCreate(Rojo, "Rojo", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    xTaskCreate(Verde, "Verde", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    */
+    xTaskCreate(Teclado, "Teclado", configMINIMAL_STACK_SIZE, (void *)board, tskIDLE_PRIORITY + 4, NULL);
     xTaskCreate(Amarillo, "Amarillo", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     xTaskCreate(Azul, "Azul", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     
